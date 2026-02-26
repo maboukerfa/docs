@@ -233,7 +233,7 @@ class ReactionFactory(factory.django.DjangoModelFactory):
         model = models.Reaction
 
     comment = factory.SubFactory(CommentFactory)
-    emoji = "test"
+    emoji = "👍"
 
     @factory.post_generation
     def users(self, create, extracted, **kwargs):

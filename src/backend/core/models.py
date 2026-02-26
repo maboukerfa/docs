@@ -39,9 +39,11 @@ from core.choices import (
     RoleChoices,
     get_equivalent_link_definition,
 )
-from core.validators import sub_validator
+from core.validators import sub_validator, validate_unicode_emoji
+
 
 logger = getLogger(__name__)
+
 
 
 def get_trashbin_cutoff():
@@ -1908,7 +1910,7 @@ class Reaction(BaseModel):
         on_delete=models.CASCADE,
         related_name="reactions",
     )
-    emoji = models.CharField(max_length=32)
+    emoji = models.CharField(max_length=32, validators=[validate_unicode_emoji])
     users = models.ManyToManyField(User, related_name="reactions")
 
     class Meta:

@@ -648,7 +648,7 @@ def test_create_reaction_anonymous_user_public_document(link_role):
     response = client.post(
         f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/"
         f"comments/{comment.id!s}/reactions/",
-        {"emoji": "test"},
+        {"emoji": "👍"},
     )
     assert response.status_code == 401
 
@@ -669,7 +669,7 @@ def test_create_reaction_authenticated_user_public_document():
     response = client.post(
         f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/"
         f"comments/{comment.id!s}/reactions/",
-        {"emoji": "test"},
+        {"emoji": "👍"},
     )
     assert response.status_code == 403
 
@@ -689,12 +689,12 @@ def test_create_reaction_authenticated_user_accessible_public_document():
     response = client.post(
         f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/"
         f"comments/{comment.id!s}/reactions/",
-        {"emoji": "test"},
+        {"emoji": "👍"},
     )
     assert response.status_code == 201
 
     assert models.Reaction.objects.filter(
-        comment=comment, emoji="test", users__in=[user]
+        comment=comment, emoji="👍", users__in=[user]
     ).exists()
 
 
@@ -714,7 +714,7 @@ def test_create_reaction_authenticated_user_connected_document_link_role_reader(
     response = client.post(
         f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/"
         f"comments/{comment.id!s}/reactions/",
-        {"emoji": "test"},
+        {"emoji": "👍"},
     )
     assert response.status_code == 403
 
@@ -742,12 +742,12 @@ def test_create_reaction_authenticated_user_connected_document(link_role):
     response = client.post(
         f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/"
         f"comments/{comment.id!s}/reactions/",
-        {"emoji": "test"},
+        {"emoji": "👍"},
     )
     assert response.status_code == 201
 
     assert models.Reaction.objects.filter(
-        comment=comment, emoji="test", users__in=[user]
+        comment=comment, emoji="👍", users__in=[user]
     ).exists()
 
 
@@ -765,7 +765,7 @@ def test_create_reaction_authenticated_user_restricted_accessible_document():
     response = client.post(
         f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/"
         f"comments/{comment.id!s}/reactions/",
-        {"emoji": "test"},
+        {"emoji": "👍"},
     )
     assert response.status_code == 403
 
@@ -786,7 +786,7 @@ def test_create_reaction_authenticated_user_restricted_accessible_document_role_
     response = client.post(
         f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/"
         f"comments/{comment.id!s}/reactions/",
-        {"emoji": "test"},
+        {"emoji": "👍"},
     )
     assert response.status_code == 403
 
@@ -811,18 +811,18 @@ def test_create_reaction_authenticated_user_restricted_accessible_document_role_
     response = client.post(
         f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/"
         f"comments/{comment.id!s}/reactions/",
-        {"emoji": "test"},
+        {"emoji": "👍"},
     )
     assert response.status_code == 201
 
     assert models.Reaction.objects.filter(
-        comment=comment, emoji="test", users__in=[user]
+        comment=comment, emoji="👍", users__in=[user]
     ).exists()
 
     response = client.post(
         f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/"
         f"comments/{comment.id!s}/reactions/",
-        {"emoji": "test"},
+        {"emoji": "👍"},
     )
     assert response.status_code == 400
     assert response.json() == {"user_already_reacted": True}
@@ -876,3 +876,24 @@ def test_delete_reaction_owned_by_the_current_user():
 
     reaction.refresh_from_db()
     assert reaction.users.exists()
+
+
+def test_create_reaction_invalid_emoji():
+    """
+    Providing an invalid emoji should return a 400 error.
+    """
+    user = factories.UserFactory()
+    document = factories.DocumentFactory(
+        link_reach="public", link_role=models.LinkRoleChoices.COMMENTER
+    )
+    thread = factories.ThreadFactory(document=document)
+    comment = factories.CommentFactory(thread=thread)
+    client = APIClient()
+    client.force_login(user)
+    response = client.post(
+        f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/"
+        f"comments/{comment.id!s}/reactions/",
+        {"emoji": "invalid"},
+    )
+    assert response.status_code == 400
+    assert response.json() == {"emoji": ["invalid is not a single valid Unicode emoji."]}
